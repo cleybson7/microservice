@@ -1,11 +1,15 @@
 package com.ead.authuser.controllers;
 
+import com.ead.authuser.dtos.UserDto;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.service.UserService;
+import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,5 +47,42 @@ public class UserController {
         }
         userService.delete(userModelOptional.get());
         return ResponseEntity.status(HttpStatus.OK).body("User deleted");
+    }
+
+    @PutMapping("/{userId}")
+    @JsonView(UserDto.UserView.UserPut.class)
+    public ResponseEntity<Object> updateUser(@PathVariable(value = "userId") UUID userId, @RequestBody UserDto userDto){
+
+        Optional<UserModel> userModelOptional = userService.findById(userId);
+        if (!userModelOptional.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        var userModel = userModelOptional.get();
+        userModel.setFullname(userDto.getFullname());
+        userModel.setPhoneNumber(userDto.getPhoneNumber());
+        userModel.setCpf(userModel.getCpf());
+        userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
+        userService.save(userModel);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userModel);
+    }
+
+    @PutMapping("/{userId}")
+    @JsonView(UserDto.UserView.PassowrdPut.class)
+    public ResponseEntity<Object> updatePassword(@PathVariable(value = "userId") UUID userId, @RequestBody UserDto userDto){
+
+        Optional<UserModel> userModelOptional = userService.findById(userId);
+        if (!userModelOptional.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        if (!userModelOptional.get().getPassword().equals(userDto.getOldPassword())){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERROR: Mismatched old Password!");
+        }
+        var userModel = userModelOptional.get();
+        userModel.setPassword(userDto.getPassword());
+        userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
+        userService.save(userModel);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Password updated successfuly.");
     }
 }
