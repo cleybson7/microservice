@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ead-authuser
+    url: jdbc:postgresql://localhost:5432/ead_authuser
     username: postgres
     password: banco123
 
@@ -18,3 +18,5 @@ spring:
     properties:
       hibernate:
         show_sql: true
+        format_sql: true
+        use_sql_comments: true
