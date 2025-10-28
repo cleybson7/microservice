@@ -4,8 +4,10 @@ import com.ead.authuser.dtos.UserDto;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.service.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -50,8 +52,10 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    @JsonView(UserDto.UserView.UserPut.class)
-    public ResponseEntity<Object> updateUser(@PathVariable(value = "userId") UUID userId, @RequestBody UserDto userDto){
+    public ResponseEntity<Object> updateUser(@PathVariable(value = "userId") UUID userId,
+                                             @RequestBody @Validated(UserDto.UserView.UserPut.class)
+                                             @JsonView(UserDto.UserView.UserPut.class)
+                                              UserDto userDto){
 
         Optional<UserModel> userModelOptional = userService.findById(userId);
         if (!userModelOptional.isPresent()){
@@ -64,12 +68,17 @@ public class UserController {
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
         userService.save(userModel);
 
-        return ResponseEntity.status(HttpStatus.OK).body(userModel);
+        var userUpdatedDto = new UserDto();
+        BeanUtils.copyProperties(userModel, userUpdatedDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userUpdatedDto);
     }
 
-    @PutMapping("/{userId}")
-    @JsonView(UserDto.UserView.PassowrdPut.class)
-    public ResponseEntity<Object> updatePassword(@PathVariable(value = "userId") UUID userId, @RequestBody UserDto userDto){
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<Object> updatePassword(@PathVariable(value = "userId") UUID userId,
+                                                 @RequestBody @Validated(UserDto.UserView.PassowrdPut.class)
+                                                 @JsonView(UserDto.UserView.PassowrdPut.class)
+                                                 UserDto userDto){
 
         Optional<UserModel> userModelOptional = userService.findById(userId);
         if (!userModelOptional.isPresent()){
@@ -84,5 +93,24 @@ public class UserController {
         userService.save(userModel);
 
         return ResponseEntity.status(HttpStatus.OK).body("Password updated successfuly.");
+    }
+
+    @PutMapping(value = "/{userId}/image")
+    public ResponseEntity<Object> updateImage(@PathVariable(value = "userId") UUID userId,
+                                              @RequestBody @Validated(UserDto.UserView.ImagePut.class)
+                                              @JsonView(UserDto.UserView.ImagePut.class)
+                                              UserDto userDto){
+        Optional<UserModel> userModelOptional = userService.findById(userId);
+        if (!userModelOptional.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        var userModel = userModelOptional.get();
+        userModel.setImageUrl(userDto.getImageUrl());
+        userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
+
+        var imageUpdated = new UserDto();
+        BeanUtils.copyProperties(userModel, imageUpdated);
+
+        return ResponseEntity.status(HttpStatus.OK).body(imageUpdated);
     }
 }

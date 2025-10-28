@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,9 +26,11 @@ public class AuthenticationController {
         this.userService = userService;
     }
 
-    @PostMapping(value = "signup")
-    @JsonView(UserDto.UserView.RegistrationPost.class)
-    public ResponseEntity<Object> registerUser(@RequestBody UserDto userDto){
+    @PostMapping(value = "/signup")
+    public ResponseEntity<Object> registerUser(@RequestBody
+                                                   @Validated(UserDto.UserView.RegistrationPost.class)
+                                                   @JsonView(UserDto.UserView.RegistrationPost.class)
+                                                   UserDto userDto){
         if (userService.existsByUsername(userDto.getUsername())){
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: username is already taken!");
         }
@@ -43,6 +46,9 @@ public class AuthenticationController {
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
         userService.save(userModel);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
+        var userCreatedDto = new UserDto();
+        BeanUtils.copyProperties(userModel, userCreatedDto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(userCreatedDto);
     }
 }
