@@ -1,6 +1,8 @@
 package com.ead.authuser.repositories;
 
 import com.ead.authuser.models.UserModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +13,6 @@ public interface UserRepository extends JpaRepository<UserModel, UUID> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    Page<UserModel> findAll(Pageable pageable);
 }
